@@ -58,7 +58,12 @@ function log(msg) {
 function loadConfig() {
   try {
     const raw = JSON.parse(fs.readFileSync(configPath, 'utf8'))
-    return { ...DEFAULT_CONFIG, ...raw }
+    const cfg = { ...DEFAULT_CONFIG, ...raw }
+    if (typeof cfg.badgeUrl === 'string') {
+      cfg.badgeUrl = cfg.badgeUrl.trim()
+      if (cfg.badgeUrl && !/^https?:\/\//i.test(cfg.badgeUrl)) cfg.badgeUrl = ''
+    }
+    return cfg
   } catch { return { ...DEFAULT_CONFIG } }
 }
 function saveConfig(cfg) {
@@ -290,7 +295,7 @@ if (!gotLock) {
 // ---------- IPC ----------
 ipcMain.handle('get-state', () => ({
   appName: APP_NAME, appVersion: APP_VERSION, dshVersion: DSH_VERSION,
-  config, themes: THEMES, portable, installed: isPackaged, dataDir, dshHome,
+  config, themes: THEMES, portable, portableBuild, installed: isPackaged, dataDir, dshHome,
   port: currentPort, running: !!(sidecar && !sidecar.killed),
 }))
 

@@ -202,14 +202,15 @@
   $('#badgeUrl').value = state.config.badgeUrl || ''
   $('#autostart').checked = !!state.autostart
   $('#portable').checked = !!state.portable
-  $('#portable').disabled = !state.installed
+  $('#portable').disabled = !state.installed || state.portableBuild
+  if (state.portableBuild) $('#portableHint').textContent = '便携版始终使用便携数据模式（数据在 exe 旁 data\\）'
+  else if (!state.installed) $('#portableHint').textContent = '开发模式下不可用（安装版/便携版中生效）'
   $('#dataDir').textContent = state.dataDir
   $('#appVer').textContent = state.appVersion
   $('#dshVer').textContent = state.dshVersion
   $('#dot').className = 'status-dot ' + (state.running ? 'on' : 'off')
   $('#runState').textContent = state.running ? '运行中' : '已停止'
   $('#port').textContent = state.port || '-'
-  if (!state.installed) $('#portableHint').textContent = '开发模式下不可用（安装版/便携版中生效）'
 
   $('#saveBadge').onclick = async () => {
     const badgeUrl = $('#badgeUrl').value.trim()
