@@ -95,20 +95,30 @@ async function startHarness() {
   currentPort = port
   log(`starting dsh web @127.0.0.1:${port} (DSH_HOME=${dshHome})`)
   fs.mkdirSync(dshHome, { recursive: true })
-  sidecar = spawn(nodeExe, [dshBin, 'web', '--port', String(port)], {
+  const proc = spawn(nodeExe, [dshBin, 'web', '--port', String(port)], {
     cwd: runtimeDir,
     env: { ...process.env, DSH_HOME: dshHome, NO_COLOR: '1' },
     windowsHide: true,
     stdio: ['ignore', 'pipe', 'pipe'],
   })
-  sidecar.stdout.on('data', (d) => log('[dsh] ' + String(d).trim()))
-  sidecar.stderr.on('data', (d) => log('[dsh:err] ' + String(d).trim()))
-  sidecar.on('exit', (code) => { log('dsh exited with code ' + code); sidecar = null; currentPort = null })
-  sidecar.on('error', (e) => log('dsh spawn error: ' + e.message))
+  sidecar = proc
+  let spawnFailed = false
+  proc.stdout.on('data', (d) => log('[dsh] ' + String(d).trim()))
+  proc.stderr.on('data', (d) => log('[dsh:err] ' + String(d).trim()))
+  proc.on('exit', (code) => {
+    log('dsh exited with code ' + code)
+    if (sidecar === proc) { sidecar = null; currentPort = null }
+  })
+  proc.on('error', (e) => {
+    spawnFailed = true
+    log('dsh spawn error: ' + e.message)
+    if (sidecar === proc) { sidecar = null; currentPort = null }
+  })
   // 首次启动需初始化 profile (~60-90s), 给足 120s
   for (let i = 0; i < 240; i++) {
     if (await ping(port)) { log('harness ready'); return port }
-    if (sidecar && sidecar.killed) throw new Error('harness process exited during startup')
+    if (spawnFailed) throw new Error('无法启动 dsh: 运行时可能不完整 (node.exe / node_modules)')
+    if (!sidecar) throw new Error('harness process exited during startup')
     if (i % 10 === 0 && mainWin) {
       mainWin.webContents.executeJavaScript(`document.getElementById('status').textContent = '正在启动 Harness…（首次启动约需 1~2 分钟，已等待 ${Math.round(i * 0.5)} 秒）'`).catch(() => {})
     }
@@ -285,6 +295,10 @@ ipcMain.handle('get-state', () => ({
 }))
 
 ipcMain.handle('set-config', (e, patch) => {
+  if (patch && patch.badgeUrl != null) {
+    patch.badgeUrl = String(patch.badgeUrl).trim()
+    if (patch.badgeUrl && !/^https?:\/\//i.test(patch.badgeUrl)) patch.badgeUrl = ''
+  }
   config = { ...config, ...patch }
   saveConfig(config)
   injectOverlay()
