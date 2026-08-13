@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'">
+<title>设置 · DeepSeek Harness 桌面版</title>
+<style>
+  :root {
+    --bg: #0B1220; --panel: #121B2E; --panel2: #0E1727; --border: #22304D;
+    --accent: #4D6BFE; --accent-soft: rgba(77,107,254,.12);
+    --text: #E6EAF2; --dim: #8A93A6; --ok: #3FBF7F; --warn: #E0A63F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+  html,body { height: 100% }
+  body {
+    background: var(--bg); color: var(--text); font-size: 13px;
+    font-family: system-ui,"Segoe UI","Microsoft YaHei",sans-serif;
+    padding: 20px 22px 28px; overflow-y: auto;
+  }
+  .head { display:flex; align-items:center; gap:10px; margin-bottom:18px }
+  .logo { width:30px; height:30px; border-radius:8px;
+    background:linear-gradient(160deg,#5B7BFF,#3D55D8);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:800; font-size:13px; letter-spacing:-.5px }
+  .head h1 { font-size:15.5px; font-weight:650 }
+  .head .sub { font-size:11.5px; color:var(--dim); margin-top:2px }
+  .card {
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; margin-bottom:12px;
+  }
+  .card h2 { font-size:12px; color:var(--dim); font-weight:600; letter-spacing:.8px; margin-bottom:12px }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 }
+  .row + .row { border-top:1px dashed var(--border) }
+  .row .lab { color:var(--text); font-size:13px }
+  .row .hint { color:var(--dim); font-size:11.5px; margin-top:2px }
+  button {
+    background:var(--accent); color:#fff; border:none; border-radius:8px;
+    padding:7px 14px; font-size:12.5px; cursor:pointer; font-family:inherit;
+    transition:filter .15s;
+  }
+  button:hover { filter:brightness(1.12) }
+  button.ghost { background:transparent; border:1px solid var(--border); color:var(--text) }
+  button.ghost:hover { border-color:var(--accent); color:var(--accent) }
+  input[type=text],input[type=url] {
+    width:100%; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:8px; padding:8px 10px; font-size:12.5px; font-family:inherit; outline:none;
+  }
+  input:focus { border-color:var(--accent) }
+  .themes { display:grid; grid-template-columns:repeat(4,1fr); gap:10px }
+  .theme-card {
+    border:1.5px solid var(--border); border-radius:10px; overflow:hidden; cursor:pointer;
+    transition:transform .12s, border-color .12s;
+  }
+  .theme-card:hover { transform:translateY(-2px) }
+  .theme-card.active { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft) }
+  .swatch { height:44px; display:flex; align-items:flex-end; padding:7px; border-bottom:1px solid var(--border) }
+  .swatch i { width:26px; height:10px; border-radius:5px; margin-right:6px }
+  .theme-card .name { font-size:11.5px; padding:7px 9px; color:var(--text) }
+  .switch { position:relative; width:38px; height:21px; flex:none }
+  .switch input { display:none }
+  .switch i {
+    position:absolute; inset:0; border-radius:999px; background:var(--border);
+    transition:background .18s; cursor:pointer;
+  }
+  .switch i:after {
+    content:''; position:absolute; top:3px; left:3px; width:15px; height:15px;
+    border-radius:50%; background:#fff; transition:transform .18s;
+  }
+  .switch input:checked + i { background:var(--accent) }
+  .switch input:checked + i:after { transform:translateX(17px) }
+  .status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px }
+  .status-dot.on { background:var(--ok); box-shadow:0 0 6px var(--ok) }
+  .status-dot.off { background:var(--warn) }
+  .mono { font-family:Consolas,monospace; font-size:11.5px; color:var(--dim) }
+  details { margin-top:10px }
+  summary { cursor:pointer; color:var(--dim); font-size:12px; user-select:none }
+  pre {
+    background:var(--panel2); border:1px solid var(--border); border-radius:8px;
+    padding:10px; font-size:11px; max-height:220px; overflow:auto; margin-top:8px;
+    white-space:pre-wrap; word-break:break-all; color:var(--dim);
+    font-family:Consolas,monospace;
+  }
+  .btn-row { display:flex; gap:8px; flex-wrap:wrap }
+  .update-line { font-size:12px; color:var(--dim); margin-top:8px; line-height:1.7 }
+  .footer { text-align:center; color:var(--dim); font-size:11px; margin-top:16px }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="logo">dsh</div>
+    <div>
+      <h1>DeepSeekHarness桌面版</h1>
+      <div class="sub">壳层设置 —— 不影响官方 Harness 本体与更新</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>外观主题</h2>
+    <div class="themes" id="themes"></div>
+  </div>
+
+  <div class="card">
+    <h2>界面角标</h2>
+    <div class="row">
+      <div><div class="lab">角标文字</div><div class="hint">显示在窗口边框右下角（壳层级，不影响 Harness 界面）</div></div>
+      <input type="text" id="badgeLabel" style="max-width:220px">
+    </div>
+    <div class="row">
+      <div><div class="lab">跳转链接</div><div class="hint">留空则隐藏角标</div></div>
+      <input type="url" id="badgeUrl" style="max-width:320px" placeholder="https://space.bilibili.com/34234499">
+    </div>
+    <div class="row">
+      <div></div>
+      <button id="saveBadge">保存角标</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>通用</h2>
+    <div class="row">
+      <div><div class="lab">开机自启</div><div class="hint">登录 Windows 后自动启动（常驻托盘）</div></div>
+      <label class="switch"><input type="checkbox" id="autostart"><i></i></label>
+    </div>
+    <div class="row">
+      <div>
+        <div class="lab">便携数据模式</div>
+        <div class="hint" id="portableHint">数据目录跟随程序所在盘（适合移动硬盘）。切换后自动重启应用。</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="portable"><i></i></label>
+    </div>
+    <div class="row">
+      <div><div class="lab">数据目录</div><div class="hint mono" id="dataDir">-</div></div>
+      <button class="ghost" id="openData">打开</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Harness</h2>
+    <div class="row">
+      <div><div class="lab"><span class="status-dot off" id="dot"></span><span id="runState">检测中…</span></div>
+        <div class="hint mono">127.0.0.1:<span id="port">-</span> · 内置版本 <span id="dshVer">-</span></div></div>
+      <button class="ghost" id="restart">重启</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="ghost" id="checkUpdate">检查更新</button>
+    </div>
+    <div class="update-line" id="updateLine"></div>
+  </div>
+
+  <div class="card">
+    <h2>关于与日志</h2>
+    <div class="row">
+      <div><div class="lab">版本</div><div class="hint">壳层 v<span id="appVer">-</span> · 官方仓库 MIT 许可</div></div>
+      <div class="btn-row">
+        <button class="ghost" id="btnBili">作者 B站频道</button>
+        <button class="ghost" id="btnGh">官方仓库</button>
+      </div>
+    </div>
+    <details>
+      <summary>运行日志</summary>
+      <pre id="logs">加载中…</pre>
+    </details>
+  </div>
+
+  <div class="footer">DeepSeek Harness 桌面版 · 由满分虎出品 · 便携模式数据随盘走</div>
+
+<script>
+(async function () {
+  const $ = (s) => document.querySelector(s)
+  let state = await window.dshd.getState()
+
+  const THEME_VARS = {}
+  Object.entries(state.themes).forEach(([key, t]) => {
+    THEME_VARS[key] = {
+      '--bg': t.bg, '--panel': t.panel, '--panel2': t.light ? '#F3ECDD' : '#0E1727',
+      '--border': t.light ? '#DCD2BC' : '#22304D',
+      '--accent': t.accent, '--accent-soft': t.accent + '1F',
+      '--text': t.text, '--dim': t.dim, '--ok': '#3FBF7F', '--warn': '#E0A63F',
+    }
+  })
+
+  function applyTheme(key) {
+    const vars = THEME_VARS[key] || THEME_VARS.deepsea
+    Object.entries(vars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v))
+    document.querySelectorAll('.theme-card').forEach((el) => el.classList.toggle('active', el.dataset.key === key))
+  }
+
+  // 主题卡
+  const themesEl = $('#themes')
+  Object.entries(state.themes).forEach(([key, t]) => {
+    const div = document.createElement('div')
+    div.className = 'theme-card'
+    div.dataset.key = key
+    div.innerHTML = `<div class="swatch" style="background:${t.bg}"><i style="background:${t.accent}"></i><i style="background:${t.panel};border:1px solid ${t.border || '#22304D'}"></i></div><div class="name">${t.name}</div>`
+    div.onclick = async () => { applyTheme(key); await window.dshd.setConfig({ theme: key }) }
+    themesEl.appendChild(div)
+  })
+
+  // 初始状态
+  applyTheme(state.config.theme)
+  $('#badgeLabel').value = state.config.badgeLabel || ''
+  $('#badgeUrl').value = state.config.badgeUrl || ''
+  $('#autostart').checked = !!state.autostart
+  $('#portable').checked = !!state.portable
+  $('#portable').disabled = !state.installed
+  $('#dataDir').textContent = state.dataDir
+  $('#appVer').textContent = state.appVersion
+  $('#dshVer').textContent = state.dshVersion
+  $('#dot').className = 'status-dot ' + (state.running ? 'on' : 'off')
+  $('#runState').textContent = state.running ? '运行中' : '已停止'
+  $('#port').textContent = state.port || '-'
+  if (!state.installed) $('#portableHint').textContent = '开发模式下不可用（安装版/便携版中生效）'
+
+  $('#saveBadge').onclick = async () => {
+    const badgeUrl = $('#badgeUrl').value.trim()
+    await window.dshd.setConfig({ badgeLabel: $('#badgeLabel').value.trim() || '作者频道', badgeUrl })
+    flash('角标已保存')
+  }
+  $('#autostart').onchange = async (e) => {
+    const r = await window.dshd.setAutostart(e.target.checked)
+    e.target.checked = r.ok ? r.value : e.target.checked
+    flash(r.ok ? '已更新开机自启' : '设置失败: ' + r.error)
+  }
+  $('#portable').onchange = async (e) => {
+    const on = e.target.checked
+    const r = await window.dshd.setPortable(on)
+    if (!r.ok) { e.target.checked = !on; flash('切换失败: ' + r.error); return }
+    flash('正在重启应用…')
+    setTimeout(() => window.dshd.relaunchApp(), 600)
+  }
+  $('#openData').onclick = () => window.dshd.openPath(state.dataDir)
+  $('#restart').onclick = async () => {
+    const r = await window.dshd.restartHarness()
+    if (r.ok) { $('#dot').className = 'status-dot on'; $('#runState').textContent = '运行中'; $('#port').textContent = r.port; flash('Harness 已重启') }
+    else flash('重启失败: ' + r.error)
+  }
+  $('#checkUpdate').onclick = async () => {
+    $('#updateLine').textContent = '正在查询 npm 官方仓库…'
+    const r = await window.dshd.checkUpdate()
+    if (!r.ok) { $('#updateLine').textContent = '查询失败: ' + r.error; return }
+    $('#updateLine').innerHTML = r.newer
+      ? `内置 dsh <b>${r.bundled}</b> · npm 最新 <b style="color:var(--warn)">${r.latest}</b><br>请关注壳层新版安装包（更新 = 换内置版本重打包，不影响你的数据）`
+      : `内置 dsh <b>${r.bundled}</b> 已是最新发布版 ✓`
+  }
+  $('#btnBili').onclick = () => window.dshd.openExternal(state.config.badgeUrl || 'https://space.bilibili.com/34234499')
+  $('#btnGh').onclick = () => window.dshd.openExternal('https://github.com/deepseek-ai/deepseek-harness')
+
+  const logs = await window.dshd.getLogs()
+  $('#logs').textContent = logs || '(暂无日志)'
+
+  let flashTimer = null
+  function flash(msg) {
+    const el = $('#updateLine')
+    el.textContent = msg
+    clearTimeout(flashTimer)
+    flashTimer = setTimeout(() => { if (!el.dataset.update) el.textContent = '' }, 4000)
+  }
+})()
+</script>
+</body>
+</html>

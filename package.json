@@ -1,0 +1,71 @@
+{
+  "name": "dsh-desktop",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 桌面版 —— 官方 Harness 的 Windows 桌面壳",
+  "main": "main.js",
+  "author": "manfenhu",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "prepare-runtime": "bash scripts/prepare-runtime.sh",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^43.4.0",
+    "electron-builder": "^26.15.3"
+  },
+  "allowScripts": [
+    "electron",
+    "electron-winstaller"
+  ],
+  "build": {
+    "appId": "com.manfenhu.dsh-desktop",
+    "productName": "DeepSeekHarness桌面版（自用）",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "settings.html",
+      "loading.html",
+      "icon/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "runtime-bundle",
+        "to": "",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon/icon.png",
+      "compression": "store"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DeepSeek Harness 桌面版",
+      "differentialPackage": false
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# 依赖与构建产物
+node_modules/
+dist/
+
+# 本地运行时 (由 scripts/prepare-runtime.sh 生成, 含 node.exe + 固定版 dsh 依赖)
+runtime-bundle/
+
+# 运行数据
+data/
+*.log
+
+# 系统文件
+Thumbs.db
+Desktop.ini
