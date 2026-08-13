@@ -194,23 +194,40 @@ function injectOverlay() {
   mainWin.webContents.insertCSS(css).catch(() => {})
   const js = `
     (function(){
-      var old = document.getElementById('dshd-badge');
-      if (old) old.remove();
       var url = ${JSON.stringify(config.badgeUrl)};
       if (!url) return;
-      var a = document.createElement('a');
-      a.id = 'dshd-badge';
-      a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
-      a.textContent = '▶ ' + ${JSON.stringify(config.badgeLabel || '作者频道')};
-      a.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483000;' +
-        'padding:7px 14px;border-radius:999px;font-size:12.5px;line-height:1;' +
-        'font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif;' +
-        'background:${t.accent};color:#fff;text-decoration:none;' +
-        'opacity:.92;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;transition:transform .15s ease;';
-      a.addEventListener('mouseenter', function(){ this.style.transform='translateY(-2px)'; });
-      a.addEventListener('mouseleave', function(){ this.style.transform='none'; });
-      (document.body || document.documentElement).appendChild(a);
-      console.log('[dsh-desktop] badge injected');
+      var BADGE_ID = 'dshd-badge';
+      function build() {
+        var a = document.createElement('a');
+        a.id = BADGE_ID;
+        a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.textContent = '▶ ' + ${JSON.stringify(config.badgeLabel || '作者频道')};
+        a.style.cssText = 'position:fixed;right:8px;bottom:8px;z-index:2147483000;' +
+          'padding:7px 14px;border-radius:999px;font-size:12.5px;line-height:1;' +
+          'font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif;' +
+          'background:${t.accent};color:#fff;text-decoration:none;' +
+          'opacity:.92;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;transition:transform .15s ease;';
+        a.addEventListener('mouseenter', function(){ this.style.transform='translateY(-2px)'; });
+        a.addEventListener('mouseleave', function(){ this.style.transform='none'; });
+        return a;
+      }
+      function ensure() {
+        if (document.getElementById(BADGE_ID)) return;
+        (document.body || document.documentElement).appendChild(build());
+      }
+      ensure();
+      // 自愈: SPA 更新 DOM 把角标节点清掉时自动重挂
+      var guard = 0;
+      new MutationObserver(function(muts){
+        for (var i = 0; i < muts.length; i++) {
+          var removed = muts[i].removedNodes;
+          for (var j = 0; j < removed.length; j++) {
+            var n = removed[j];
+            if (n && n.id === BADGE_ID) { guard++; if (guard < 50) setTimeout(ensure, 0); return; }
+          }
+        }
+      }).observe(document.documentElement, { childList: true, subtree: true });
+      console.log('[dsh-desktop] badge injected (self-healing)');
     })();
   `
   mainWin.webContents.executeJavaScript(js).catch(() => {})
